@@ -1,0 +1,7 @@
+newmtl M_Hoodie_Default
+Ka 1.0 1.0 1.0
+Kd 0.18 0.18 0.20
+Ks 0.1 0.1 0.1
+Ns 20.0
+d 1.0
+illum 2
