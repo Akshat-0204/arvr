@@ -1,87 +1,66 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using VoxelAR.Interaction;
 
 namespace VoxelAR.AR
 {
     /// <summary>
-    /// Attached to placed merchandise in AR.
-    /// Provides intuitive single/two-finger rotation and pinch-to-scale manipulation.
+    /// Two-finger pinch (uniform scale) and twist (yaw around the build area's up axis).
+    /// One-finger input is left to tap-to-build. Editor: mouse wheel scales, Q/E rotates.
     /// </summary>
     public class ARObjectManipulator : MonoBehaviour
     {
-        [Header("Scale Constraints")]
-        [SerializeField] private float minScale = 0.2f;
-        [SerializeField] private float maxScale = 1.5f;
+        public const float MinScale = 0.25f;
+        public const float MaxScale = 3f;
 
-        [Header("Sensitivity")]
-        [SerializeField] private float rotationSpeed = 0.4f;
-        [SerializeField] private float pinchSensitivity = 0.003f;
+        [SerializeField] private float rotateKeySpeed = 90f;
+        [SerializeField] private float wheelScaleStep = 0.1f;
 
-        private float currentScale;
-        private Vector2 lastTouchPos;
+        private bool gestureStartedOverUI;
 
-        private void Start()
-        {
-            currentScale = transform.localScale.x;
-        }
+        public float Scale => transform.localScale.x;
 
         private void Update()
         {
-            HandleTouches();
+            if (UnityEngine.Input.touchCount == 2) HandlePinchTwist();
+            else gestureStartedOverUI = false;
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+            HandleEditorControls();
+#endif
         }
 
-        private void HandleTouches()
+        private void HandlePinchTwist()
         {
-            // Two-finger Pinch (Scale) and Twist (Rotation)
-            if (Input.touchCount == 2)
+            Touch t0 = UnityEngine.Input.GetTouch(0);
+            Touch t1 = UnityEngine.Input.GetTouch(1);
+
+            if (t0.phase == TouchPhase.Began || t1.phase == TouchPhase.Began)
             {
-                Touch touch0 = Input.GetTouch(0);
-                Touch touch1 = Input.GetTouch(1);
-
-                if (EventSystem.current != null)
-                {
-                    if (EventSystem.current.IsPointerOverGameObject(touch0.fingerId) ||
-                        EventSystem.current.IsPointerOverGameObject(touch1.fingerId))
-                    {
-                        return;
-                    }
-                }
-
-                // 1. Pinch to Scale
-                Vector2 prevPos0 = touch0.position - touch0.deltaPosition;
-                Vector2 prevPos1 = touch1.position - touch1.deltaPosition;
-
-                float prevDistance = (prevPos0 - prevPos1).magnitude;
-                float currentDistance = (touch0.position - touch1.position).magnitude;
-                float deltaDistance = currentDistance - prevDistance;
-
-                currentScale += deltaDistance * pinchSensitivity;
-                currentScale = Mathf.Clamp(currentScale, minScale, maxScale);
-                transform.localScale = Vector3.one * currentScale;
-
-                // 2. Twist to Rotate
-                Vector2 prevDir = prevPos1 - prevPos0;
-                Vector2 currentDir = touch1.position - touch0.position;
-                float angle = Vector2.SignedAngle(prevDir, currentDir);
-
-                transform.Rotate(Vector3.up, -angle, Space.World);
+                var tap = TapInput.Instance;
+                gestureStartedOverUI = tap != null && (tap.IsOverUI(t0.position) || tap.IsOverUI(t1.position));
             }
-            // Single-finger horizontal drag (Rotation around Y)
-            else if (Input.touchCount == 1)
-            {
-                Touch touch = Input.GetTouch(0);
+            if (gestureStartedOverUI) return;
 
-                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
-                {
-                    return;
-                }
+            Vector2 prev0 = t0.position - t0.deltaPosition;
+            Vector2 prev1 = t1.position - t1.deltaPosition;
+            float prevDist = (prev0 - prev1).magnitude;
+            float curDist = (t0.position - t1.position).magnitude;
+            if (prevDist > 1f) SetScale(Scale * (curDist / prevDist));
 
-                if (touch.phase == TouchPhase.Moved)
-                {
-                    float deltaX = touch.deltaPosition.x;
-                    transform.Rotate(Vector3.up, -deltaX * rotationSpeed, Space.World);
-                }
-            }
+            float angle = Vector2.SignedAngle(prev1 - prev0, t1.position - t0.position);
+            transform.Rotate(Vector3.up, -angle, Space.Self);
         }
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+        private void HandleEditorControls()
+        {
+            float wheel = UnityEngine.Input.mouseScrollDelta.y;
+            if (Mathf.Abs(wheel) > 0.01f) SetScale(Scale * (1f + wheel * wheelScaleStep));
+            if (UnityEngine.Input.GetKey(KeyCode.Q)) transform.Rotate(Vector3.up, -rotateKeySpeed * Time.deltaTime, Space.Self);
+            if (UnityEngine.Input.GetKey(KeyCode.E)) transform.Rotate(Vector3.up, rotateKeySpeed * Time.deltaTime, Space.Self);
+        }
+#endif
+
+        public void SetScale(float s) => transform.localScale = Vector3.one * Mathf.Clamp(s, MinScale, MaxScale);
     }
 }

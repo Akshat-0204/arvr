@@ -3,6 +3,9 @@
     "rootNamespace": "VoxelAR.Tests",
     "references": [
         "VoxelAR.Runtime",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.ARSubsystems",
+        "Unity.XR.ARFoundation",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -4,89 +4,42 @@ using UnityEngine.XR.ARFoundation;
 namespace VoxelAR.AR
 {
     /// <summary>
-    /// Manages the visibility of detected AR planes and controls plane rendering behavior.
-    /// Can automatically hide plane visualizations when merchandise is placed to keep the AR view clean.
+    /// Hides plane visuals while the build area is placed (including planes detected afterwards)
+    /// and shows them again when it is removed.
     /// </summary>
     public class ARPlaneController : MonoBehaviour
     {
-        [Header("AR Foundation Reference")]
-        [SerializeField] private ARPlaneManager planeManager;
-
-        [Header("Settings")]
-        [Tooltip("Hide plane visualization meshes once an object has been placed.")]
-        [SerializeField] private bool hidePlanesAfterPlacement = true;
-
+        private ARPlaneManager planeManager;
+        private WorldPlacement placement;
         private bool planesVisible = true;
 
-        private void Awake()
+        public void Init(ARPlaneManager planes, WorldPlacement worldPlacement)
         {
-            if (planeManager == null)
-            {
-                planeManager = FindFirstObjectByType<ARPlaneManager>();
-            }
-        }
-
-        private void Start()
-        {
-            if (ARPlacementManager.Instance != null && hidePlanesAfterPlacement)
-            {
-                ARPlacementManager.Instance.OnObjectPlaced += HandleObjectPlaced;
-                ARPlacementManager.Instance.OnObjectRemoved += HandleObjectRemoved;
-            }
+            planeManager = planes;
+            placement = worldPlacement;
+            placement.Placed += _ => SetPlanesActive(false);
+            placement.Removed += () => SetPlanesActive(true);
+            planeManager.trackablesChanged.AddListener(OnPlanesChanged);
         }
 
         private void OnDestroy()
         {
-            if (ARPlacementManager.Instance != null)
-            {
-                ARPlacementManager.Instance.OnObjectPlaced -= HandleObjectPlaced;
-                ARPlacementManager.Instance.OnObjectRemoved -= HandleObjectRemoved;
-            }
+            if (planeManager != null) planeManager.trackablesChanged.RemoveListener(OnPlanesChanged);
         }
 
-        private void HandleObjectPlaced(GameObject placed)
+        private void OnPlanesChanged(ARTrackablesChangedEventArgs<ARPlane> args)
         {
-            SetPlanesActive(false);
-        }
-
-        private void HandleObjectRemoved()
-        {
-            SetPlanesActive(true);
-        }
-
-        public void TogglePlanesVisibility()
-        {
-            SetPlanesActive(!planesVisible);
+            if (planesVisible) return;
+            foreach (var p in args.added)
+                if (p != null) p.gameObject.SetActive(false);
         }
 
         public void SetPlanesActive(bool active)
         {
             planesVisible = active;
-
             if (planeManager == null) return;
-
             foreach (var plane in planeManager.trackables)
-            {
-                if (plane != null)
-                {
-                    plane.gameObject.SetActive(active);
-                }
-            }
-
-            Debug.Log($"[ARPlaneController] Planes visibility set to: {active}");
-        }
-
-        public void ClearAllPlanes()
-        {
-            if (planeManager == null) return;
-
-            foreach (var plane in planeManager.trackables)
-            {
-                if (plane != null)
-                {
-                    Destroy(plane.gameObject);
-                }
-            }
+                if (plane != null) plane.gameObject.SetActive(active);
         }
     }
 }
