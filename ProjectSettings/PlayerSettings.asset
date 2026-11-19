@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 26
+  productGUID: 5b7d6a3f1c8e4e9a8f2b1d3c5e7a9b0c
+  AndroidProfiler: 0
+  AndroidFilterTouchesWhenObscured: 0
+  AndroidEnableSustainedPerformanceMode: 0
+  defaultScreenOrientation: 1
+  targetDevice: 2
+  useOnDemandResources: 0
+  accelerometerFrequency: 60
+  companyName: MerchAR
+  productName: MerchAR
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  m_SplashScreenBackgroundColor: {r: 0.06, g: 0.07, b: 0.09, a: 1}
+  m_ShowUnitySplashScreen: 1
+  m_ShowUnitySplashLogo: 1
+  m_SplashScreenOverlayOpacity: 1
+  m_SplashScreenAnimation: 1
+  m_SplashScreenLogoStyle: 1
+  m_SplashScreenDrawMode: 0
+  m_SplashScreenBackgroundAnimationStatic: 1
+  m_SplashScreenLogoAnimationStatic: 1
+  colorSpace: 1
+  stripEngineCode: 1
+  iPhoneStrippingLevel: 0
+  stripUnusedMeshComponents: 1
+  activeInputHandler: 2
+  applicationIdentifier:
+    Android: com.merchar.viewer
+    Standalone: com.merchar.viewer
+  buildNumber:
+    Android: 1
+    Standalone: 1
+  AndroidMinSdkVersion: 24
+  AndroidTargetSdkVersion: 34
+  AndroidPreferredInstallLocation: 1
+  androidTargetArchitectures: 2
+  scriptingBackend:
+    Android: 1
+    Standalone: 0
+  defaultIsFullScreen: 1
+  defaultIsNativeResolution: 1
+  runInBackground: 0
+  captureSingleScreen: 0
+  muteOtherAudioSources: 0
+  ResetResolutionOnWindowResize: 0
+  supportedAspectRatios:
+    4:3: 1
+    5:4: 1
+    16:10: 1
+    16:9: 1
+    Others: 1
+  bundleVersion: 1.0.0

@@ -22,6 +22,8 @@ namespace MerchAR.Product
 
         private float targetScaleValue = 1.0f;
 
+        public float DefaultScale => defaultScale;
+
         private void Start()
         {
             if (targetTransform == null)
@@ -95,6 +97,10 @@ namespace MerchAR.Product
         public void ResetScale()
         {
             targetScaleValue = defaultScale;
+            if (targetTransform != null)
+            {
+                targetTransform.localScale = Vector3.one * defaultScale;
+            }
         }
 
         public void ApplyScaleImmediate(float scale)

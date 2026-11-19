@@ -41,6 +41,8 @@ namespace MerchAR.AR
         private GameObject currentPlacedObject;
         private Pose currentReticlePose;
         private bool isReticlePoseValid = false;
+        private bool lastPlaneDetectionStatus = false;
+        private bool hasFiredInitialPlaneStatus = false;
         private List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
         public GameObject CurrentPlacedObject => currentPlacedObject;
@@ -61,15 +63,15 @@ namespace MerchAR.AR
 
             if (raycastManager == null)
             {
-                raycastManager = FindObjectOfType<ARRaycastManager>();
+                raycastManager = FindFirstObjectByType<ARRaycastManager>();
             }
             if (planeManager == null)
             {
-                planeManager = FindObjectOfType<ARPlaneManager>();
+                planeManager = FindFirstObjectByType<ARPlaneManager>();
             }
             if (arCamera == null)
             {
-                arCamera = Camera.main;
+                arCamera = FindFirstObjectByType<Camera>();
             }
         }
 
@@ -85,6 +87,11 @@ namespace MerchAR.AR
             {
                 placementReticleInstance.SetActive(false);
             }
+        }
+
+        private void OnDisable()
+        {
+            SetReticleVisible(false);
         }
 
         private void Update()
@@ -123,7 +130,13 @@ namespace MerchAR.AR
                 }
             }
 
-            OnPlaneDetectionStatusChanged?.Invoke(isReticlePoseValid);
+            // Only fire event when plane detection status changes
+            if (!hasFiredInitialPlaneStatus || isReticlePoseValid != lastPlaneDetectionStatus)
+            {
+                lastPlaneDetectionStatus = isReticlePoseValid;
+                hasFiredInitialPlaneStatus = true;
+                OnPlaneDetectionStatusChanged?.Invoke(isReticlePoseValid);
+            }
         }
 
         private void HandlePlacementTouch()
@@ -180,6 +193,7 @@ namespace MerchAR.AR
                 : rotation;
 
             currentPlacedObject = Instantiate(prefabToSpawn, position, facingRotation);
+            currentPlacedObject.SetActive(true); // Ensure clone is active even if prefab was inactive
             currentPlacedObject.transform.localScale = Vector3.one * initialSpawnScale;
 
             // Ensure it has an ARObjectManipulator component attached
