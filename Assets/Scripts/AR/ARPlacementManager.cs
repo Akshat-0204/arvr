@@ -71,7 +71,10 @@ namespace MerchAR.AR
             }
             if (arCamera == null)
             {
-                arCamera = FindFirstObjectByType<Camera>();
+                var xrOrigin = FindFirstObjectByType<Unity.XR.CoreUtils.XROrigin>();
+                if (xrOrigin != null) arCamera = xrOrigin.Camera;
+                if (arCamera == null) arCamera = Camera.main;
+                if (arCamera == null) arCamera = FindFirstObjectByType<Camera>();
             }
         }
 

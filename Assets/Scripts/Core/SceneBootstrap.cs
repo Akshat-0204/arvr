@@ -139,7 +139,7 @@ namespace MerchAR.Core
                 arRig = new GameObject("[ARMode_Rig]");
             }
 
-            var arSession = arRig.GetComponentInChildren<ARSession>(true);
+            var arSession = FindFirstObjectByType<ARSession>();
             if (arSession == null)
             {
                 var sessionGo = new GameObject("AR Session");
@@ -148,7 +148,7 @@ namespace MerchAR.Core
                 sessionGo.AddComponent<ARInputManager>();
             }
 
-            var xrOrigin = arRig.transform.Find("XR Origin (AR Rig)");
+            var xrOrigin = FindFirstObjectByType<Unity.XR.CoreUtils.XROrigin>();
             if (xrOrigin == null)
             {
                 var originGo = new GameObject("XR Origin (AR Rig)");
@@ -167,6 +167,7 @@ namespace MerchAR.Core
                 var cam = camGo.AddComponent<Camera>();
                 camGo.AddComponent<ARCameraManager>();
                 camGo.AddComponent<ARCameraBackground>();
+                camGo.AddComponent<UnityEngine.InputSystem.XR.TrackedPoseDriver>();
 
                 var originComp = originGo.GetComponent<Unity.XR.CoreUtils.XROrigin>();
                 if (originComp != null)
