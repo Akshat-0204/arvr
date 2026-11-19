@@ -59,6 +59,16 @@ namespace MerchAR.Core
                 return;
             }
 
+            // Ensure singleton roots remain active in Awake so all singletons initialize properly
+            if (viewerProductRoot != null && !viewerProductRoot.activeSelf)
+            {
+                viewerProductRoot.SetActive(true);
+            }
+            if (arPlacementManagerRoot != null && !arPlacementManagerRoot.activeSelf)
+            {
+                arPlacementManagerRoot.SetActive(true);
+            }
+
             // Ensure screen doesn't dim during AR presentation
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
         }
@@ -131,14 +141,63 @@ namespace MerchAR.Core
             bool isViewer = (mode == AppMode.Viewer3D);
             bool isAR = (mode == AppMode.AugmentedReality);
 
-            // Toggle 3D Viewer Rigs
+            // Toggle 3D Viewer Cameras and Lights
             if (viewerCamera != null) viewerCamera.gameObject.SetActive(isViewer);
             if (viewerLightingRig != null) viewerLightingRig.SetActive(isViewer);
-            if (viewerProductRoot != null) viewerProductRoot.SetActive(isViewer);
 
-            // Toggle AR Rigs
+            // Keep viewerProductRoot active so ProductController singleton lives; toggle child visuals/components instead
+            if (viewerProductRoot != null)
+            {
+                viewerProductRoot.SetActive(true);
+
+                var rotator = viewerProductRoot.GetComponent<ProductRotator>();
+                if (rotator != null) rotator.enabled = isViewer;
+
+                var scaler = viewerProductRoot.GetComponent<ProductScaler>();
+                if (scaler != null) scaler.enabled = isViewer;
+
+                // Toggle visibility of merchandise models under turntable
+                for (int i = 0; i < viewerProductRoot.transform.childCount; i++)
+                {
+                    Transform child = viewerProductRoot.transform.GetChild(i);
+                    if (child != null)
+                    {
+                        if (isViewer)
+                        {
+                            if (ProductController.Instance != null && ProductController.Instance.CurrentProduct != null)
+                            {
+                                child.gameObject.SetActive(child.gameObject == ProductController.Instance.CurrentProduct.productRoot);
+                            }
+                            else
+                            {
+                                child.gameObject.SetActive(i == 0);
+                            }
+                        }
+                        else
+                        {
+                            child.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            }
+
+            // Keep arPlacementManagerRoot active so ARPlacementManager singleton lives; toggle component enabled state
+            if (arPlacementManagerRoot != null)
+            {
+                arPlacementManagerRoot.SetActive(true);
+                var placementMgr = arPlacementManagerRoot.GetComponent<ARPlacementManager>();
+                if (placementMgr != null)
+                {
+                    placementMgr.enabled = isAR;
+                    if (!isAR)
+                    {
+                        placementMgr.SetReticleVisible(false);
+                    }
+                }
+            }
+
+            // Toggle XR Origin
             if (xrOrigin != null) xrOrigin.SetActive(isAR);
-            if (arPlacementManagerRoot != null) arPlacementManagerRoot.SetActive(isAR);
 
             if (arSession != null)
             {

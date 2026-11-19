@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf2e11e6441202843b3f253d474071bf, type: 3}
+  m_Name: URP-HighFidelity-Renderer
+  m_EditorClassIdentifier: 
+  m_RendererFeatures:
+  - {fileID: 11400002}
+  m_RendererFeatureMap: 
+  m_PostProcessData: {fileID: 0}
+  m_XRSystemData: {fileID: 0}
+  m_OpaqueSortingPreference: 0
+  m_TransparentSortingPreference: 1
+  m_DefaultStencilState:
+    m_OverrideStencilState: 0
+    m_StencilReference: 0
+    m_StencilCompareFunction: 8
+    m_PassOperation: 0
+    m_FailOperation: 0
+    m_ZFailOperation: 0
+  m_IntermediateTextureMode: 1
+--- !u!114 &11400002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa3822262d08a0e419fc4966d925e04c, type: 3}
+  m_Name: ARBackgroundRendererFeature
+  m_EditorClassIdentifier: 

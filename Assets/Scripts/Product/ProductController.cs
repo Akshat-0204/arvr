@@ -121,6 +121,18 @@ namespace MerchAR.Product
                 turntableRoot.localPosition = Vector3.zero;
                 turntableRoot.localRotation = Quaternion.identity;
                 turntableRoot.localScale = Vector3.one;
+
+                var rotator = turntableRoot.GetComponent<ProductRotator>();
+                if (rotator != null)
+                {
+                    rotator.ResetRotation();
+                }
+
+                var scaler = turntableRoot.GetComponent<ProductScaler>();
+                if (scaler != null)
+                {
+                    scaler.ResetScale();
+                }
             }
 
             var current = CurrentProduct;

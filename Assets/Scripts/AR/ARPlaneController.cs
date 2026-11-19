@@ -22,7 +22,7 @@ namespace MerchAR.AR
         {
             if (planeManager == null)
             {
-                planeManager = FindObjectOfType<ARPlaneManager>();
+                planeManager = FindFirstObjectByType<ARPlaneManager>();
             }
         }
 
