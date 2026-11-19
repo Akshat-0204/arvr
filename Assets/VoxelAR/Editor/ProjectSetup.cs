@@ -41,6 +41,7 @@ namespace VoxelAR.EditorTools
             EnsureMaterials();
             EnsureRenderPipeline();
             EnsureXRLoaders();
+            AndroidBuild.ApplySettings();
             CreateScene();
 
             AssetDatabase.SaveAssets();

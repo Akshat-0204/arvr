@@ -1,85 +1,67 @@
-# MerchAR — Troubleshooting & Diagnosis Guide
+# VoxelAR — Troubleshooting
 
-This guide addresses common setup pitfalls, ARCore tracking challenges, and runtime issues.
+## Device / AR
 
----
+**"This phone doesn't support ARCore"**
+The device isn't on Google's ARCore supported list, or Google Play Services for AR is missing.
+Install or update it from the Play Store. Emulators are not supported, so use XR Simulation in the editor.
 
-## 1. Augmented Reality & Device Compatibility
+**Camera permission message with a Retry button**
+The user denied the camera. Tap Retry. If Android stops showing the prompt ("Don't ask again"),
+enable it under Settings › Apps › VoxelAR › Permissions › Camera, then tap Retry.
 
-### Issue: "ARCore is not supported on this device"
-- **Cause**: The Android device either lacks hardware certification for ARCore or does not have Google Play Services for AR installed.
-- **Solution**:
-  1. Check the official Google list: [ARCore Supported Devices](https://developers.google.com/ar/devices).
-  2. Open the Google Play Store on your device and search for **Google Play Services for AR**. Ensure it is updated.
-  3. In Unity **XR Plug-in Management > ARCore**, verify **ARCore Requirement** is set appropriately. If testing on an unsupported phone, setting it to `Optional` will let the app run its 3D Viewer mode cleanly.
+**Black camera feed**
+- The URP renderer in use must contain **AR Background Renderer Feature**. Run *VoxelAR ▸ Setup Project*,
+  which checks `Assets/Settings/URP-HighFidelity` and assigns it to every quality level.
+- Graphics API must be **OpenGLES3** for Android (*VoxelAR ▸ Apply Android Settings*).
+- *Project Settings ▸ XR Plug-in Management ▸ Android*: ARCore must be ticked.
 
-### Issue: Camera View is Completely Black in AR Mode
-- **Cause 1**: Camera permission was denied by the user.
-  - **Fix**: Open Android Settings > Apps > MerchAR > Permissions > Camera > Select "Allow while using the app".
-- **Cause 2**: Missing **AR Camera Background** component on the AR Camera child of XR Origin.
-  - **Fix**: Select the AR Camera GameObject, ensure `ARCameraBackground` and `ARCameraManager` components are attached.
-- **Cause 3**: Graphics API incompatibility with ARCore.
-  - **Fix**: Under **Player Settings > Other Settings > Graphics APIs**, ensure `Vulkan` or `OpenGLES3` is configured.
+**Banner stays on "Move your phone slowly…"**
+Planes need texture and light. Plain white tables, glass and dark rooms detect slowly or not at all.
+Add a book or a sheet of paper. Hold the phone 30–60 cm above the surface and move it sideways.
 
-### Issue: "Scanning surface..." banner never finds a plane
-- **Cause 1**: Extremely low ambient light or featureless surfaces (e.g. glossy glass table, solid white vinyl floor).
-  - **Fix**: Move the phone near a surface with visible texture (carpet, wood grain, tile with grout lines) in a well-lit room.
-- **Cause 2**: Plane Detection Mode is set to None.
-  - **Fix**: Check `ARPlaneManager` on `XR Origin` and ensure **Plane Detection Mode** is set to `Horizontal`.
+**"Tracking lost…" banner**
+ARCore lost its position (too dark, too fast, blank surface). The build stays anchored, so move slowly over
+a textured area until the banner clears. If the build drifted, use *Menu ▸ Re-place area*. Your blocks are kept.
 
----
+## Interaction
 
-## 2. 3D Models & Rendering
+**Tapping buttons also builds blocks**
+It shouldn't. A touch that starts over UI is never a tap (`TapTracker`). If you see this, check the EventSystem.
+`SceneBootstrap` creates one with `StandaloneInputModule`, and *Player ▸ Active Input Handling* must be **Both**.
 
-### Issue: Model appears magenta/pink in Unity Editor or Device
-- **Cause**: Material shader mismatch (e.g., standard Built-in pipeline shader inside a Universal Render Pipeline project).
-- **Solution**:
-  1. Select the material (`M_TShirt_Default` or `M_Hoodie_Default`).
-  2. In the Inspector, change Shader to **Universal Render Pipeline/Lit** (or `Universal Render Pipeline/Simple Lit`).
-  3. If importing custom FBX models, run **Window > Rendering > Render Pipeline Converter** and convert materials to URP.
+**Pinch adds a block**
+Any second finger cancels the pending tap. If this happens, the build is probably using a custom input
+path. Taps should come only through `TapInput.TryConsumeTap`.
 
-### Issue: 3D Model is invisible or tiny after placement
-- **Cause**: Asset scale unit mismatch between 3D modeling tool and Unity meters.
-- **Solution**:
-  1. In `Assets/Models/Generated/`, click on `TShirt.obj` or `Hoodie.obj`.
-  2. In the Model tab of the Inspector, verify **Model > Scale Factor** is set to `1.0`.
-  3. In `ARPlacementManager.cs`, adjust `initialSpawnScale` (default: `0.5f`).
+**Blocks land in the wrong cell after scaling or rotating**
+Hits are converted with `WorldRoot.InverseTransformPoint/Direction` before `GridMath.TargetCell`. Anything that
+moves blocks must be a child of WorldRoot, or it will break the conversion.
 
-### Issue: Fallback Procedural Model Generation
-- If you ever need to generate models immediately inside Unity without importing OBJ/FBX:
-  1. Add an empty GameObject in the scene.
-  2. Add component **`ProceduralApparelGenerator`**.
-  3. Right-click the component header in the Inspector and select **"Generate T-Shirt"** or **"Generate Hoodie"**.
-  4. The procedural mesh is generated instantly with UVs and normals.
+## Rendering
 
----
+**Pink/magenta blocks or reticle**
+`Resources/M_Block` or `M_Overlay` is missing or uses a non-URP shader. Re-run *VoxelAR ▸ Setup Project*.
 
-## 3. Customization & Input Interaction
+**Blocks not hit by taps**
+The `Voxel` layer (8) must exist. Setup creates it. Without it, the raycast falls back to default layers.
 
-### Issue: Color buttons change UI but do not alter 3D apparel
-- **Cause**: Target MeshRenderers not assigned on `ProductController` or `ProductItem`.
-- **Solution**:
-  1. Check `ProductController` in the Inspector. Expand `Products > Element 0 / Element 1`.
-  2. Ensure `Target Renderers` contains the `MeshRenderer` attached to the 3D model.
-  3. `ProductColorManager` modifies `_BaseColor` via `MaterialPropertyBlock`. Ensure your shader uses `_BaseColor` (URP Lit) or `_Color`.
+## Saves
 
-### Issue: Tapping UI buttons accidentally places merchandise in AR
-- **Cause**: Touch event leaking through Canvas without UI raycast blocking.
-- **Solution**:
-  - `ARPlacementManager.cs`, `ProductRotator.cs`, and `ARObjectManipulator.cs` include:
-    ```csharp
-    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId)) return;
-    ```
-  - Ensure your UI Canvas has a `GraphicRaycaster` component attached and the scene has an `EventSystem` GameObject.
+**Load says "slot N is empty"**
+Nothing has been saved there yet. Slot 1 is filled automatically when the app is backgrounded.
+Files: `persistentDataPath/builds/slot{0..2}.json`. On Android, pull with
+`adb shell run-as com.voxelar.app cat files/builds/slot0.json`.
 
----
+**"Load failed: …"**
+The file is corrupt or from an unknown format version. The current build is left untouched, because
+validation happens before the grid changes.
 
-## 4. Compilation & Build Issues
+## Build
 
-### Issue: "IL2CPP build failed: ARM64 architecture required"
-- **Cause**: Google Play 64-bit requirement.
-- **Solution**:
-  - Go to **Project Settings > Player > Other Settings**.
-  - Set **Scripting Backend** to `IL2CPP`.
-  - Under **Target Architectures**, check `ARM64` and uncheck `ARMv7`.
-  - Ensure the Android NDK path is valid under **Unity > Settings > External Tools**.
+**IL2CPP / Gradle failures**
+Use the Android SDK/NDK/JDK installed through Unity Hub (*Preferences ▸ External Tools*). ARM64 only.
+minSdk 26. Check `Logs/build.log` for the first `error`.
+
+**Batchmode says the project is already open**
+Close the Unity editor first. Batch runs and the editor can't share a project.
